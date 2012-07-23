@@ -42,7 +42,7 @@ char* CallCLR(string DllName, string ClassWithNamespace, string MethodName, vect
 	{
 		// get DLLName, Namespace, Class and Method
 		String ^sDLLName = (gcnew String(DllName.c_str()))->Trim();
-		if (!sDLLName->ToLower()->EndsWith(".dll"))
+		if (!(sDLLName->ToLower()->EndsWith(".dll") || sDLLName->ToLower()->EndsWith(".exe")))
 			sDLLName += ".dll";
 		String ^sClassWithNamespace = (gcnew String(ClassWithNamespace.c_str()))->Trim();
 		String ^sMethod = (gcnew String(MethodName.c_str()))->Trim();
@@ -196,6 +196,7 @@ extern "C" __declspec(dllexport) void Destroy(HWND hwndParent, int string_size,
 }
 
 //#pragma unmanaged
+// Upgrade to Hosted CLR => http://msdn.microsoft.com/en-us/magazine/cc163567.aspx
 //BOOL WINAPI DllMain(HANDLE hInst, ULONG ul_reason_for_call, LPVOID lpReserved)
 //{
 //	g_hInstance=(HINSTANCE)hInst;
