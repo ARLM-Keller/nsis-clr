@@ -36,7 +36,7 @@ System::Reflection::Assembly ^ LoadAssembly(String ^filename)
 	//http://forums.msdn.microsoft.com/en-US/clr/thread/093c3606-e68e-46f4-98a1-f2396d3f88ca/
 }
 
-char* CallCLR(string DllName, string ClassWithNamespace, string MethodName, vector<string> Args)
+char* CallCLR(string DllName, string ClassWithNamespace, string MethodName, vector<string> Args, bool loadInMemory)
 {
 	try
 	{
@@ -48,7 +48,16 @@ char* CallCLR(string DllName, string ClassWithNamespace, string MethodName, vect
 		String ^sMethod = (gcnew String(MethodName.c_str()))->Trim();
 
 		// load assembly (is closed on disk right away)
-		System::Reflection::Assembly ^assembly = LoadAssembly(".\\" + sDLLName);
+		System::Reflection::Assembly ^assembly;
+		
+		if (loadInMemory)
+		{
+			assembly = LoadAssembly(".\\" + sDLLName);
+		}
+		else
+		{
+			assembly = System::Reflection::Assembly::LoadFrom(".\\" + sDLLName);
+		}
 		if (assembly == nullptr)
 			throw gcnew Exception("Error loading .NET assembly");
 
@@ -142,10 +151,51 @@ char* CallCLR(string DllName, string ClassWithNamespace, string MethodName, vect
 	}
 	catch (System::Exception ^ex)
 	{
-		String ^msg = "Error calling .NET DLL method\n\n" + ex->Message;
+		String ^msg = "Error calling .NET DLL method\n\n" + ex->Message + "\n\n" + ex->StackTrace ;
 		Windows::Forms::MessageBox::Show(msg);
 		return "";
 	}
+}
+
+extern "C" __declspec(dllexport) void CallMemory(HWND hwndParent, int string_size, 
+                                      char *variables, stack_t **stacktop,
+                                      extra_parameters *extra)
+{
+	// expected parameters:
+	// filename.dll, namespace.namespace...class, method, numparams, params...
+
+	g_hwndParent=hwndParent;
+	EXDLL_INIT();
+
+	char buf[1024];
+
+	// filename.dll
+	popstring(buf);
+	string dllname = string(buf);
+
+	// namespace and class
+	popstring(buf);
+	string classwithnamespace = string(buf);
+
+	// method
+	popstring(buf);
+	string method = string(buf);
+
+	// num params
+	popstring(buf);
+	int numparams = atoi(buf);
+
+	// params
+	vector<string> args;
+	for (int i=0; i<numparams; i++)
+	{
+		popstring(buf);
+		string tmp = string(buf);
+		args.push_back(tmp);
+	}
+	
+	char* result = (char*)CallCLR(dllname, classwithnamespace, method, args, true);
+	pushstring(result);
 }
 
 extern "C" __declspec(dllexport) void Call(HWND hwndParent, int string_size, 
@@ -185,7 +235,7 @@ extern "C" __declspec(dllexport) void Call(HWND hwndParent, int string_size,
 		args.push_back(tmp);
 	}
 	
-	char* result = (char*)CallCLR(dllname, classwithnamespace, method, args);
+	char* result = (char*)CallCLR(dllname, classwithnamespace, method, args, false);
 	pushstring(result);
 }
 

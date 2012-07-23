@@ -60,6 +60,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="$(NoInherit)"
+				OutputFile="$(OutDir)\CLR.dll"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				AssemblyDebug="1"
@@ -133,6 +134,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="$(NoInherit)"
+				OutputFile="$(OutDir)\CLR.dll"
 				LinkIncremental="1"
 				GenerateDebugInformation="true"
 				RandomizedBaseAddress="1"
