@@ -1,0 +1,7 @@
+*.ncb
+*.suo
+obj/
+_UpgradeReport_Files/
+*.user
+*.old
+/UpgradeLog.XML
