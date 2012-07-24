@@ -22,7 +22,7 @@
 			IntermediateDirectory="$(ProjectDir)obj\$(ConfigurationName)"
 			ConfigurationType="2"
 			CharacterSet="1"
-			ManagedExtensions="1"
+			ManagedExtensions="0"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -59,7 +59,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="$(NoInherit)"
+				AdditionalDependencies="$(NoInherit) mscoree.lib"
 				OutputFile="$(OutDir)\CLR.dll"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
@@ -96,7 +96,7 @@
 			IntermediateDirectory="$(ProjectDir)obj\$(ConfigurationName)"
 			ConfigurationType="2"
 			CharacterSet="1"
-			ManagedExtensions="1"
+			ManagedExtensions="0"
 			WholeProgramOptimization="1"
 			>
 			<Tool
@@ -133,7 +133,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="$(NoInherit)"
+				AdditionalDependencies="$(NoInherit) mscoree.lib"
 				OutputFile="$(OutDir)\CLR.dll"
 				LinkIncremental="1"
 				GenerateDebugInformation="true"
