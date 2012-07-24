@@ -1,5 +1,6 @@
 #include "exdll.h"
 #include "MSCorEE.h"
+#include "ezlogger_headers.hpp"
 #include <tchar.h>
 #include <string.h>
 #include <stdlib.h>
@@ -70,11 +71,11 @@ LPSTR W2CA(TCHAR * szSrcStr)
 	return psz;
 }
 
-char *returnChar(int value)
+char *returnChar(long value)
 {
 	char *strRetVal;
-	strRetVal = (char *) malloc(sizeof(char) * 20);
-	_itoa(value, strRetVal, 10);
+	strRetVal = (char *) malloc(sizeof(char) * 100);
+	_ltoa(value, strRetVal, 10);
 
 	return strRetVal;
 }
@@ -92,6 +93,7 @@ char* CallCLR(TCHAR* DllName, TCHAR* ClassWithNamespace, TCHAR* MethodName, TCHA
         (PVOID*)&pClrHost);
 	if (hr != S_OK)
 	{
+		EZLOGGERPRINT("CorBindToRuntimeEx: 0x%08x", hr);
 		return returnChar(hr);
 	}
  
@@ -99,6 +101,7 @@ char* CallCLR(TCHAR* DllName, TCHAR* ClassWithNamespace, TCHAR* MethodName, TCHA
     hr = pClrHost->Start();
 	if (hr != S_OK)
 	{
+		EZLOGGERPRINT("Start: 0x%08x", hr);
 		return returnChar(hr);
 	}
 
@@ -113,6 +116,7 @@ char* CallCLR(TCHAR* DllName, TCHAR* ClassWithNamespace, TCHAR* MethodName, TCHA
         &retVal);
 	if (hr != S_OK)
 	{
+		EZLOGGERPRINT("ExecuteInDefaultAppDomain: [%s] %s->%s(%s) 0x%08x", W2CA(DllName), W2CA(ClassWithNamespace), W2CA(MethodName), W2CA(Args), hr);
 		return returnChar(hr);
 	}
 
@@ -123,6 +127,7 @@ char* CallCLR(TCHAR* DllName, TCHAR* ClassWithNamespace, TCHAR* MethodName, TCHA
     hr = pClrHost->Stop();
 	if (hr != S_OK)
 	{
+		EZLOGGERPRINT("Stop: 0x%08x", hr);
 		return returnChar(hr);
 	}
 
@@ -130,6 +135,7 @@ char* CallCLR(TCHAR* DllName, TCHAR* ClassWithNamespace, TCHAR* MethodName, TCHA
     pClrHost->Release();
 	if (hr != S_OK)
 	{
+		EZLOGGERPRINT("Release: 0x%08x", hr);
 		return returnChar(hr);
 	}
 
