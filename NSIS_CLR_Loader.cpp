@@ -6,6 +6,7 @@
 #include <stdlib.h>
 
 HWND g_hwndParent;
+HANDLE g_hInstance;
 
 TCHAR *CA2W(LPSTR szSrcStr)
 {
@@ -83,8 +84,12 @@ char *returnChar(long value)
 char* CallCLR(TCHAR* DllName, TCHAR* ClassWithNamespace, TCHAR* MethodName, TCHAR* Args)
 {
 	// Bind to the CLR runtime..
-    ICLRRuntimeHost *pClrHost = NULL;
-    HRESULT hr = CorBindToRuntimeEx(
+	DWORD retVal = 0;
+	DWORD appDomainId;
+
+	ICLRRuntimeHost *pClrHost = NULL;
+
+	HRESULT hr = CorBindToRuntimeEx(
         _T("v2.0.50727"),   // Load the latest 2.0 CLR version available
         _T("wks"), // Workstation GC ("wks" or "svr" overrides)
         0,      // No flags needed
@@ -93,49 +98,25 @@ char* CallCLR(TCHAR* DllName, TCHAR* ClassWithNamespace, TCHAR* MethodName, TCHA
         (PVOID*)&pClrHost);
 	if (hr != S_OK)
 	{
-		EZLOGGERPRINT("CorBindToRuntimeEx: 0x%08x", hr);
-		return returnChar(hr);
-	}
- 
-    // Now, start the CLR.
-    hr = pClrHost->Start();
-	if (hr != S_OK)
-	{
-		EZLOGGERPRINT("Start: 0x%08x", hr);
+		EZLOGGERPRINT("CorBindToRuntimeEx Call: 0x%08x", hr);
 		return returnChar(hr);
 	}
 
-	DWORD retVal = 0;
-	DWORD appDomainId;
-
-    // Okay, the CLR is up and running in this (previously native) process.
-    // Now call a method on our managed C# class library.
-    hr = pClrHost->ExecuteInDefaultAppDomain(
-        DllName, ClassWithNamespace,
-        MethodName, Args,
-        &retVal);
+	hr = pClrHost->ExecuteInDefaultAppDomain(
+					DllName, ClassWithNamespace,
+					MethodName, Args,
+					&retVal);
 	if (hr != S_OK)
 	{
 		EZLOGGERPRINT("ExecuteInDefaultAppDomain: [%s] %s->%s(%s) 0x%08x", W2CA(DllName), W2CA(ClassWithNamespace), W2CA(MethodName), W2CA(Args), hr);
 		return returnChar(hr);
 	}
 
-	// Optionally stop the CLR runtime (we could also leave it running)
-
-	//pClrHost->GetCurrentAppDomainId(&appDomainId);
-	//hr = pClrHost->UnloadAppDomain(appDomainId, true);
-    hr = pClrHost->Stop();
-	if (hr != S_OK)
-	{
-		EZLOGGERPRINT("Stop: 0x%08x", hr);
-		return returnChar(hr);
-	}
-
-    // Don't forget to clean up.
+	// Don't forget to clean up.
     pClrHost->Release();
 	if (hr != S_OK)
 	{
-		EZLOGGERPRINT("Release: 0x%08x", hr);
+		EZLOGGERPRINT("Release Call: 0x%08x", hr);
 		return returnChar(hr);
 	}
 
@@ -184,4 +165,119 @@ extern "C" __declspec(dllexport) void Call(HWND hwndParent, int string_size,
 	char* result = (char*)CallCLR(CA2W(dllname), CA2W(classwithnamespace), CA2W(method), CA2W(args));
 	pushstring(result);
 	free(result);
+}
+
+extern "C" __declspec(dllexport) void Start(HWND hwndParent, int string_size, 
+                                      char *variables, stack_t **stacktop,
+                                      extra_parameters *extra)
+{
+	g_hwndParent=hwndParent;
+	EXDLL_INIT();
+
+	char buf[1024] = {0};
+
+	while (popstring(buf))
+	{}
+
+	char* result = NULL;
+	ICLRRuntimeHost *pClrHost = NULL;
+
+	HRESULT hr = CorBindToRuntimeEx(
+        _T("v2.0.50727"),   // Load the latest 2.0 CLR version available
+        _T("wks"), // Workstation GC ("wks" or "svr" overrides)
+        0,      // No flags needed
+        CLSID_CLRRuntimeHost,
+        IID_ICLRRuntimeHost,
+        (PVOID*)&pClrHost);
+	if (hr != S_OK)
+	{
+		EZLOGGERPRINT("CorBindToRuntimeEx Start: 0x%08x", hr);
+		result = returnChar(hr);
+	}
+ 
+    // Now, start the CLR.
+    hr = pClrHost->Start();
+	if (hr != S_OK)
+	{
+		EZLOGGERPRINT("Start: 0x%08x", hr);
+		result = returnChar(hr);
+	}
+
+	// Don't forget to clean up.
+    pClrHost->Release();
+	if (hr != S_OK)
+	{
+		EZLOGGERPRINT("Release Star: 0x%08x", hr);
+		result = returnChar(hr);
+	}
+	else
+	{
+		result = returnChar(0);
+	}
+	
+	pushstring(result);
+	free(result);
+}
+
+extern "C" __declspec(dllexport) void Stop(HWND hwndParent, int string_size, 
+                                      char *variables, stack_t **stacktop,
+                                      extra_parameters *extra)
+{
+	g_hwndParent=hwndParent;
+	EXDLL_INIT();
+
+	char buf[1024] = {0};
+
+	while (popstring(buf))
+	{}
+
+	char* result = NULL;
+	ICLRRuntimeHost *pClrHost = NULL;
+
+	HRESULT hr = CorBindToRuntimeEx(
+        _T("v2.0.50727"),   // Load the latest 2.0 CLR version available
+        _T("wks"), // Workstation GC ("wks" or "svr" overrides)
+        0,      // No flags needed
+        CLSID_CLRRuntimeHost,
+        IID_ICLRRuntimeHost,
+        (PVOID*)&pClrHost);
+	if (hr != S_OK)
+	{
+		EZLOGGERPRINT("CorBindToRuntimeEx Stop: 0x%08x", hr);
+		result = returnChar(hr);
+	}
+
+	// Optionally stop the CLR runtime (we could also leave it running)
+
+	DWORD appDomainId;
+	pClrHost->GetCurrentAppDomainId(&appDomainId);
+	hr = pClrHost->UnloadAppDomain(appDomainId, true);
+
+    hr = pClrHost->Stop();
+	if (hr != S_OK)
+	{
+		EZLOGGERPRINT("Stop: 0x%08x", hr);
+		result = returnChar(hr);
+	}
+
+    // Don't forget to clean up.
+    pClrHost->Release();
+	if (hr != S_OK)
+	{
+		EZLOGGERPRINT("Release Stop: 0x%08x", hr);
+		result = returnChar(hr);
+	}
+	else
+	{
+		result = returnChar(0);
+	}
+
+	pushstring(result);
+	free(result);
+}
+
+BOOL WINAPI DllMain(HANDLE hInst, ULONG ul_reason_for_call, LPVOID lpReserved)
+{
+	g_hInstance=hInst;
+	return TRUE;
 }
